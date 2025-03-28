@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Menu, Plus } from 'lucide-react';
+import { SendHorizontal, Menu, Plus, Feather } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -161,7 +161,10 @@ const ChatInterface: React.FC = () => {
           </SheetContent>
         </Sheet>
         
-        <h1 className="text-xl font-semibold">Abdelfattah's Nest</h1>
+        <h1 className="text-xl font-semibold flex items-center">
+          <Feather className="h-5 w-5 mr-2" /> 
+          Abdelfattah's Nest
+        </h1>
         <div className="w-10"></div> {/* Spacer to center the title */}
       </header>
 
@@ -210,7 +213,7 @@ const ChatInterface: React.FC = () => {
             disabled={!message.trim()}
             className="bg-nest-accent hover:bg-nest-accent/80"
           >
-            <Send className="h-4 w-4" />
+            <SendHorizontal className="h-4 w-4" />
           </Button>
         </form>
       </div>

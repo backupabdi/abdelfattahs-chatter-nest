@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Menu, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
@@ -30,7 +30,7 @@ const ChatInterface: React.FC = () => {
       messages: [
         {
           id: '1',
-          text: "Welcome to Abdelfattah's Nest. How can I assist you today?",
+          text: "Welcome, Abdelfattah! How may I assist you today?",
           sender: 'ai',
           timestamp: new Date(),
         },
@@ -101,7 +101,7 @@ const ChatInterface: React.FC = () => {
       messages: [
         {
           id: Date.now().toString(),
-          text: "Welcome to a new conversation. How can I help you?",
+          text: "Welcome, Abdelfattah! How may I assist you today?",
           sender: 'ai',
           timestamp: new Date(),
         },
@@ -123,13 +123,13 @@ const ChatInterface: React.FC = () => {
     <div className="flex flex-col h-screen w-full bg-nest-background text-nest-text relative">
       {/* Header */}
       <header className="p-4 flex justify-between items-center border-b border-nest-accent/20">
-        <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-          <DrawerTrigger asChild>
+        <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+          <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="text-nest-text">
               <Menu className="h-5 w-5" />
             </Button>
-          </DrawerTrigger>
-          <DrawerContent className="h-[80%] bg-nest-secondaryBg text-nest-text border-nest-accent/20">
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[250px] bg-nest-secondaryBg text-nest-text border-nest-accent/20">
             <div className="p-4">
               <Button 
                 onClick={createNewChat} 
@@ -158,8 +158,8 @@ const ChatInterface: React.FC = () => {
                 ))}
               </div>
             </div>
-          </DrawerContent>
-        </Drawer>
+          </SheetContent>
+        </Sheet>
         
         <h1 className="text-xl font-semibold">Abdelfattah's Nest</h1>
         <div className="w-10"></div> {/* Spacer to center the title */}

@@ -1,7 +1,8 @@
 
 import { toast } from "@/hooks/use-toast";
 
-const API_URL = 'http://localhost:11434/api/generate';
+// Get API URL from environment variables, with fallback
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export type AIRequestPayload = {
   prompt: string;
@@ -13,7 +14,9 @@ export type AIResponseData = {
 
 export const generateAIResponse = async (payload: AIRequestPayload): Promise<string> => {
   try {
-    const response = await fetch(API_URL, {
+    // In development, this will use the proxy (/api/generate)
+    // In production, it will use VITE_API_URL from .env.production
+    const response = await fetch(`${API_URL}/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -40,7 +43,7 @@ export const generateAIResponse = async (payload: AIRequestPayload): Promise<str
 
 export const createNewChatWithAI = async (): Promise<string> => {
   try {
-    const response = await fetch(API_URL, {
+    const response = await fetch(`${API_URL}/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

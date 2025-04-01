@@ -1,7 +1,7 @@
 
 import { toast } from "@/hooks/use-toast";
 
-const API_URL = 'http://your-server-ip:11434/api/generate';
+const API_URL = 'http://localhost:11434/api/generate';
 
 export type AIRequestPayload = {
   prompt: string;

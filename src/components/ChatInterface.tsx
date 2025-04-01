@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { SendHorizontal, Menu, Plus, Feather, Copy, Check, Code } from 'lucide-react';
+import { SendHorizontal, Menu, Plus, Tent, Copy, Check, Code, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -169,6 +169,32 @@ const ChatInterface: React.FC = () => {
     }
   };
 
+  const deleteChat = (chatId: string) => {
+    // Don't allow deleting the last chat
+    if (chats.length <= 1) {
+      toast({
+        title: "Cannot Delete",
+        description: "You must have at least one chat available.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const updatedChats = chats.filter(chat => chat.id !== chatId);
+    setChats(updatedChats);
+    
+    // If the active chat is being deleted, switch to another chat
+    if (activeChat === chatId) {
+      setActiveChat(updatedChats[0].id);
+    }
+
+    toast({
+      title: "Chat Deleted",
+      description: "The chat has been deleted successfully.",
+      duration: 2000,
+    });
+  };
+
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text)
       .then(() => {
@@ -256,20 +282,32 @@ const ChatInterface: React.FC = () => {
               <div className="space-y-2">
                 <h3 className="text-sm font-semibold mb-2">Recent Chats</h3>
                 {chats.map((chat) => (
-                  <Button
-                    key={chat.id}
-                    variant="ghost"
-                    className={cn(
-                      "w-full justify-start text-left",
-                      activeChat === chat.id ? "bg-nest-accent/20" : ""
-                    )}
-                    onClick={() => {
-                      setActiveChat(chat.id);
-                      setIsDrawerOpen(false);
-                    }}
-                  >
-                    {chat.title}
-                  </Button>
+                  <div key={chat.id} className="flex items-center group">
+                    <Button
+                      variant="ghost"
+                      className={cn(
+                        "w-full justify-start text-left",
+                        activeChat === chat.id ? "bg-nest-accent/20" : ""
+                      )}
+                      onClick={() => {
+                        setActiveChat(chat.id);
+                        setIsDrawerOpen(false);
+                      }}
+                    >
+                      {chat.title}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteChat(chat.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-400 hover:text-red-600" />
+                    </Button>
+                  </div>
                 ))}
               </div>
             </div>
@@ -277,7 +315,7 @@ const ChatInterface: React.FC = () => {
         </Sheet>
         
         <h1 className="text-xl font-semibold flex items-center">
-          <Feather className="h-5 w-5 mr-2" /> 
+          <Tent className="h-5 w-5 mr-2 text-[#D6BCFA]" /> 
           Abdelfattah's Nest
         </h1>
         <div className="w-10"></div> {/* Spacer to center the title */}

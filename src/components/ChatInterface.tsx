@@ -1,11 +1,13 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { SendHorizontal, Menu, Plus, Feather } from 'lucide-react';
+import { SendHorizontal, Menu, Plus, Feather, Copy, Check, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 
 type Message = {
   id: string;
@@ -42,6 +44,8 @@ const ChatInterface: React.FC = () => {
   const messageEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [copying, setCopying] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Auto-scroll to the bottom of messages
   useEffect(() => {
@@ -54,6 +58,16 @@ const ChatInterface: React.FC = () => {
       inputRef.current.focus();
     }
   }, []);
+
+  // Reset copy icon after delay
+  useEffect(() => {
+    if (copying) {
+      const timer = setTimeout(() => {
+        setCopying(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [copying]);
 
   const getCurrentChat = () => {
     return chats.find(chat => chat.id === activeChat) || chats[0];
@@ -119,6 +133,70 @@ const ChatInterface: React.FC = () => {
     }, 100);
   };
 
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        setCopying(id);
+        toast({
+          title: "Copied to clipboard",
+          description: "The message has been copied to your clipboard.",
+          duration: 2000,
+        });
+      })
+      .catch(err => {
+        console.error('Failed to copy text: ', err);
+        toast({
+          title: "Failed to copy",
+          description: "Could not copy to clipboard. Please try again.",
+          variant: "destructive",
+          duration: 2000,
+        });
+      });
+  };
+
+  // Function to format code blocks
+  const formatMessageWithCodeBlocks = (text: string) => {
+    // Check if text contains code block markers ```
+    if (!text.includes('```')) {
+      return <p className="text-sm whitespace-pre-wrap">{text}</p>;
+    }
+
+    // Split by code block markers
+    const segments = text.split(/(```(?:[\s\S]*?)```)/g);
+    
+    return (
+      <div className="text-sm whitespace-pre-wrap">
+        {segments.map((segment, index) => {
+          if (segment.startsWith('```') && segment.endsWith('```')) {
+            // Extract code without the backticks
+            const code = segment.slice(3, -3).trim();
+            return (
+              <div key={index} className="relative my-2 rounded-md bg-slate-900 p-4 text-slate-50 overflow-x-auto">
+                <div className="absolute right-2 top-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                    onClick={() => copyToClipboard(code, `code-${index}`)}
+                  >
+                    {copying === `code-${index}` ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                <Code className="h-4 w-4 inline-block mr-2 text-slate-400" />
+                <code>{code}</code>
+              </div>
+            );
+          }
+          return <span key={index}>{segment}</span>;
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col h-screen w-full bg-nest-background text-nest-text relative">
       {/* Header */}
@@ -175,15 +253,29 @@ const ChatInterface: React.FC = () => {
             <div
               key={msg.id}
               className={cn(
-                "p-3 rounded-lg max-w-[85%] animate-fade-in",
+                "p-3 rounded-lg max-w-[85%] animate-fade-in relative group",
                 msg.sender === 'user'
                   ? "ml-auto bg-nest-accent text-white"
                   : "mr-auto bg-nest-messageBg"
               )}
             >
-              <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
-              <div className="text-xs opacity-70 mt-1">
-                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {formatMessageWithCodeBlocks(msg.text)}
+              <div className="flex justify-between items-center mt-2">
+                <div className="text-xs opacity-70">
+                  {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => copyToClipboard(msg.text, msg.id)}
+                >
+                  {copying === msg.id ? (
+                    <Check className="h-3 w-3" />
+                  ) : (
+                    <Copy className="h-3 w-3" />
+                  )}
+                </Button>
               </div>
             </div>
           ))}
@@ -217,6 +309,7 @@ const ChatInterface: React.FC = () => {
           </Button>
         </form>
       </div>
+      <Toaster />
     </div>
   );
 };

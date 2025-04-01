@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Toaster } from '@/components/ui/toaster';
+import { generateAIResponse, createNewChatWithAI } from '@/services/aiService';
 
 type Message = {
   id: string;
@@ -41,6 +42,7 @@ const ChatInterface: React.FC = () => {
     },
   ]);
   const [activeChat, setActiveChat] = useState<string>('1');
+  const [isLoading, setIsLoading] = useState(false);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -73,7 +75,7 @@ const ChatInterface: React.FC = () => {
     return chats.find(chat => chat.id === activeChat) || chats[0];
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!message.trim()) return;
 
     const currentChat = getCurrentChat();
@@ -84,53 +86,87 @@ const ChatInterface: React.FC = () => {
       timestamp: new Date(),
     };
 
-    // Simulate AI response
-    const newAiMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      text: `I received your message: "${message}". This is a simulated response.`,
-      sender: 'ai',
-      timestamp: new Date(),
-    };
-
-    // Update the chat with both messages
-    const updatedChats = chats.map(chat => {
+    // Update the chat with the user message first
+    const updatedChatsWithUserMessage = chats.map(chat => {
       if (chat.id === currentChat.id) {
         return {
           ...chat,
-          messages: [...chat.messages, newUserMessage, newAiMessage],
+          messages: [...chat.messages, newUserMessage],
         };
       }
       return chat;
     });
 
-    setChats(updatedChats);
+    setChats(updatedChatsWithUserMessage);
     setMessage('');
     setIsDrawerOpen(false);
+    
+    // Set loading state
+    setIsLoading(true);
+    
+    try {
+      // Call API for AI response
+      const aiResponseText = await generateAIResponse({ prompt: message });
+      
+      // Add AI response
+      const newAiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: aiResponseText,
+        sender: 'ai',
+        timestamp: new Date(),
+      };
+      
+      // Update the chat with the AI message
+      const updatedChats = updatedChatsWithUserMessage.map(chat => {
+        if (chat.id === currentChat.id) {
+          return {
+            ...chat,
+            messages: [...chat.messages, newAiMessage],
+          };
+        }
+        return chat;
+      });
+      
+      setChats(updatedChats);
+    } catch (error) {
+      console.error('Error in chat flow:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const createNewChat = () => {
-    const newChat: Chat = {
-      id: Date.now().toString(),
-      title: `Chat ${chats.length + 1}`,
-      messages: [
-        {
-          id: Date.now().toString(),
-          text: "Welcome, Abdelfattah! How may I assist you today?",
-          sender: 'ai',
-          timestamp: new Date(),
-        },
-      ],
-      createdAt: new Date(),
-    };
-
-    setChats([...chats, newChat]);
-    setActiveChat(newChat.id);
-    setIsDrawerOpen(false);
+  const createNewChat = async () => {
+    setIsLoading(true);
     
-    // Focus on input after creating a new chat
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 100);
+    try {
+      const welcomeMessage = await createNewChatWithAI();
+      
+      const newChat: Chat = {
+        id: Date.now().toString(),
+        title: `Chat ${chats.length + 1}`,
+        messages: [
+          {
+            id: Date.now().toString(),
+            text: welcomeMessage,
+            sender: 'ai',
+            timestamp: new Date(),
+          },
+        ],
+        createdAt: new Date(),
+      };
+
+      setChats([...chats, newChat]);
+      setActiveChat(newChat.id);
+      setIsDrawerOpen(false);
+    } catch (error) {
+      console.error('Error creating new chat:', error);
+    } finally {
+      setIsLoading(false);
+      // Focus on input after creating a new chat
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
   };
 
   const copyToClipboard = (text: string, id: string) => {
@@ -212,6 +248,7 @@ const ChatInterface: React.FC = () => {
               <Button 
                 onClick={createNewChat} 
                 className="w-full mb-4 bg-nest-accent text-white hover:bg-nest-accent/80"
+                disabled={isLoading}
               >
                 <Plus className="mr-2 h-4 w-4" /> New Chat
               </Button>
@@ -298,11 +335,12 @@ const ChatInterface: React.FC = () => {
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Type your message here..."
             className="flex-1 bg-nest-secondaryBg border-nest-accent/20 text-nest-text placeholder:text-nest-text/50"
+            disabled={isLoading}
           />
           <Button 
             type="submit" 
             size="icon"
-            disabled={!message.trim()}
+            disabled={!message.trim() || isLoading}
             className="bg-nest-accent hover:bg-nest-accent/80"
           >
             <SendHorizontal className="h-4 w-4" />

@@ -3,6 +3,7 @@ import { toast } from "@/hooks/use-toast";
 
 // Get API URL from environment variables, with fallback
 const API_URL = import.meta.env.VITE_API_URL || '/api';
+const MODEL_NAME = "qwen2.5:7b";
 
 export type AIRequestPayload = {
   prompt: string;
@@ -21,23 +22,27 @@ export const generateAIResponse = async (payload: AIRequestPayload): Promise<str
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        model: MODEL_NAME,
+        prompt: payload.prompt,
+        stream: false
+      }),
     });
 
     if (!response.ok) {
       throw new Error(`API response error: ${response.status}`);
     }
 
-    const data: AIResponseData = await response.json();
+    const data = await response.json();
     return data.response;
   } catch (error) {
     console.error('Error generating AI response:', error);
     toast({
       title: "Connection Error",
-      description: "Failed to connect to AI service. Please try again.",
+      description: "Failed to connect to Ollama service. Please check if Ollama is running.",
       variant: "destructive",
     });
-    return "I'm sorry, I couldn't process your request at the moment. Please try again later.";
+    return "I'm sorry, I couldn't process your request at the moment. Please make sure the Ollama server is running.";
   }
 };
 
@@ -49,7 +54,9 @@ export const createNewChatWithAI = async (): Promise<string> => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        model: MODEL_NAME,
         prompt: "Start a new conversation",
+        stream: false
       }),
     });
 
@@ -57,13 +64,13 @@ export const createNewChatWithAI = async (): Promise<string> => {
       throw new Error(`API response error: ${response.status}`);
     }
 
-    const data: AIResponseData = await response.json();
+    const data = await response.json();
     return data.response;
   } catch (error) {
     console.error('Error creating new chat:', error);
     toast({
       title: "Connection Error",
-      description: "Failed to initialize new chat. Using default welcome message.",
+      description: "Failed to initialize new chat. Make sure Ollama is running.",
       variant: "destructive",
     });
     return "Welcome, Abdelfattah! How may I assist you today?";

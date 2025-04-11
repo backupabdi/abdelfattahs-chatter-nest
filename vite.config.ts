@@ -13,7 +13,8 @@ export default defineConfig(({ mode }) => ({
       '/api': {
         target: 'http://localhost:11434',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        // Don't rewrite paths since the Ollama API expects /api in the path
+        // rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
   },

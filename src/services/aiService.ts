@@ -17,7 +17,7 @@ export const generateAIResponse = async (payload: AIRequestPayload): Promise<str
   try {
     // In development, this will use the proxy (/api/generate)
     // In production, it will use VITE_API_URL from .env.production
-    const response = await fetch(`${API_URL}/generate`, {
+    const response = await fetch(`${API_URL}/api/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ export const generateAIResponse = async (payload: AIRequestPayload): Promise<str
 
 export const createNewChatWithAI = async (): Promise<string> => {
   try {
-    const response = await fetch(`${API_URL}/generate`, {
+    const response = await fetch(`${API_URL}/api/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
